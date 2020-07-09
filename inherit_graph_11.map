@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title="STL class." alt="" coords="5,115,107,141"/>
+<area shape="rect" id="node2" title="STL class." alt="" coords="155,115,277,141"/>
+<area shape="rect" id="node3" href="$structjwt_1_1ecdsa__exception.html" title=" " alt="" coords="337,5,480,32"/>
+<area shape="rect" id="node4" href="$structjwt_1_1rsa__exception.html" title=" " alt="" coords="346,56,471,83"/>
+<area shape="rect" id="node5" href="$structjwt_1_1signature__generation__exception.html" title=" " alt="" coords="326,107,491,149"/>
+<area shape="rect" id="node6" href="$structjwt_1_1signature__verification__exception.html" title=" " alt="" coords="325,173,492,214"/>
+<area shape="rect" id="node7" href="$structjwt_1_1token__verification__exception.html" title=" " alt="" coords="335,238,482,279"/>
+</map>
