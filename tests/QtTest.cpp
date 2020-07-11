@@ -162,6 +162,15 @@ struct qt_traits {
         object[key] = value;
         return true;
     }
+    //Functions for json strings
+    static std::string string_toStd(const typename qt_traits::string_type& string) {
+        return std::string(string.toUtf8().constData());
+    }
+
+    static qt_traits::string_type string_fromStd(const std::string& string) {
+        return QString::fromUtf8(string.data(), string.size());
+    }
+
 };
 
 TEST(QtTest, BasicClaims) {

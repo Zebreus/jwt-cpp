@@ -2027,6 +2027,15 @@ namespace jwt {
             }
         }
 
+        //Functions for json strings
+        static std::string string_to_std(const string_type& string) {
+            return string;
+        }
+
+        static string_type string_from_std(const std::string& string) {
+            return string;
+        }
+
         //Functions for json arrays
         template<typename Iterator>
         static const array_type array_construct(Iterator begin, Iterator end){
