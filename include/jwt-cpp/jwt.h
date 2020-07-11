@@ -1065,7 +1065,7 @@ namespace jwt {
 			typename json_traits::value_type,
 			typename json_traits::string_type,
 			typename json_traits::object_type,
-			typename json_traits::array_type>::value, "must staisfy json container requirements");
+            typename json_traits::array_type>::value, "must satisfy json container requirements");
 		static_assert(details::is_valid_traits<json_traits>::value, "traits must satisfy requirements");
 
 			typename json_traits::value_type val;
