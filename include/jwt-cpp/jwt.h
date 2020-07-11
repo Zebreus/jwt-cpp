@@ -1427,7 +1427,7 @@ namespace jwt {
 		 */
 		JWT_CLAIM_EXPLICIT decoded_jwt(const typename json_traits::string_type& token)
 		: decoded_jwt(token, [](const typename json_traits::string_type& token){
-				return base::decode<alphabet::base64url>(base::pad<alphabet::base64url>(token));
+                return json_traits::string_from_std(base::decode<alphabet::base64url>(base::pad<alphabet::base64url>(json_traits::string_to_std(token))));
 		})
 		{}
 	#endif
@@ -1446,19 +1446,20 @@ namespace jwt {
 		decoded_jwt(const typename json_traits::string_type& token, Decode decode)
 			: token(token)
 		{
-			auto hdr_end = token.find('.');
-			if (hdr_end == json_traits::string_type::npos)
+            std::string standart_token = json_traits::string_to_std(token);
+            auto hdr_end = standart_token.find('.');
+            if (hdr_end == std::string::npos)
 				throw std::invalid_argument("invalid token supplied");
-			auto payload_end = token.find('.', hdr_end + 1);
-			if (payload_end == json_traits::string_type::npos)
+            auto payload_end = standart_token.find('.', hdr_end + 1);
+            if (payload_end == std::string::npos)
 				throw std::invalid_argument("invalid token supplied");
-			header_base64 = token.substr(0, hdr_end);
-			payload_base64 = token.substr(hdr_end + 1, payload_end - hdr_end - 1);
-			signature_base64 = token.substr(payload_end + 1);
+            header_base64 = json_traits::string_from_std(standart_token.substr(0, hdr_end));
+            payload_base64 = json_traits::string_from_std(standart_token.substr(hdr_end + 1, payload_end - hdr_end - 1));
+            signature_base64 = json_traits::string_from_std(standart_token.substr(payload_end + 1));
 
-			header = decode(header_base64);
-			payload = decode(payload_base64);
-			signature = decode(signature_base64);
+            header = decode(header_base64);
+            payload = decode(payload_base64);
+            signature = decode(signature_base64);
 
 			auto parse_claims = [](const typename json_traits::string_type& str) {
 				using basic_claim_t = basic_claim<json_traits>;
