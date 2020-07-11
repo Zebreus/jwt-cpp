@@ -91,6 +91,21 @@ struct nlohmann_traits {
         object[key] = value;
         return true;
     }
+
+    //Functions for json arrays
+    template<typename Iterator>
+    static const array_type array_construct(Iterator begin, Iterator end){
+        return array_type(begin, end);
+    }
+
+    static const value_type array_get(const array_type& array, const int index) {
+        return array.at(index);
+    }
+
+    static bool array_set(array_type& array, const int index, const value_type& value) {
+        array[index] = value;
+        return true;
+    }
 };
 
 TEST(NlohmannTest, BasicClaims) {

@@ -1092,11 +1092,11 @@ namespace jwt {
 				: val(std::move(v))
 			{}
 			JWT_CLAIM_EXPLICIT basic_claim(const set_t& s)
-				: val(typename json_traits::array_type(s.begin(), s.end()))
+                : val(json_traits::array_construct(s.begin(), s.end()))
 			{}
 			template<typename Iterator>
 			basic_claim(Iterator begin, Iterator end)
-				: val(typename json_traits::array_type(begin, end))
+                : val(json_traits::array_construct(begin, end))
 			{}
 
 			/**
@@ -2017,6 +2017,21 @@ namespace jwt {
 
         static bool object_set(object_type& object, const string_type& key, const value_type& value) {
             object[key] = value;
+            return true;
+        }
+
+        //Functions for json arrays
+        template<typename Iterator>
+        static const array_type array_construct(Iterator begin, Iterator end){
+            return array_type(begin, end);
+        }
+
+        static const value_type array_get(const array_type& array, const int index) {
+            return array.at(index);
+        }
+
+        static bool array_set(array_type& array, const int index, const value_type& value) {
+            array[index] = value;
             return true;
         }
 	};
