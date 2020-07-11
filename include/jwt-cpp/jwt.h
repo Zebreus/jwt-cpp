@@ -23,6 +23,7 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include <functional>
 
 #ifdef __cpp_lib_void_t
 // We have std::void_t and std::make_void
@@ -1168,9 +1169,9 @@ namespace jwt {
 			 */
 			set_t as_set() const {
 				set_t res;
-				for(const auto& e : json_traits::as_array(val)) {
-					res.insert(json_traits::as_string(e));
-			}
+                json_traits::array_for_each(json_traits::as_array(val), [&res](const typename json_traits::value_type& value){
+                    res.insert(json_traits::as_string(value));
+                });
 				return res;
 			}
 
@@ -1466,9 +1467,9 @@ namespace jwt {
 				if (!json_traits::parse(val, str))
 					throw std::runtime_error("Invalid json");
 
-				for (const auto& e : json_traits::as_object(val)) {
-					res.emplace(e.first, basic_claim_t(e.second));
-				}
+                json_traits::object_for_each(json_traits::as_object(val), [&res](const typename json_traits::string_type& key, const typename json_traits::value_type& value){
+                    res.emplace(key, basic_claim_t(value));
+                });
 
 				return res;
 			};
@@ -2020,6 +2021,12 @@ namespace jwt {
             return true;
         }
 
+        static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
+            for(const auto& value : object){
+                function(value.first, value.second);
+            }
+        }
+
         //Functions for json arrays
         template<typename Iterator>
         static const array_type array_construct(Iterator begin, Iterator end){
@@ -2033,6 +2040,12 @@ namespace jwt {
         static bool array_set(array_type& array, const int index, const value_type& value) {
             array[index] = value;
             return true;
+        }
+
+        static void array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
+            for(const value_type& value : array){
+                function(value);
+            }
         }
 	};
 

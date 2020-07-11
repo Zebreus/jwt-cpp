@@ -92,6 +92,12 @@ struct nlohmann_traits {
         return true;
     }
 
+    static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
+        for(const auto& value : object){
+            function(value.first, value.second);
+        }
+    }
+
     //Functions for json arrays
     template<typename Iterator>
     static const array_type array_construct(Iterator begin, Iterator end){
@@ -105,6 +111,12 @@ struct nlohmann_traits {
     static bool array_set(array_type& array, const int index, const value_type& value) {
         array[index] = value;
         return true;
+    }
+
+    static void array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
+        for(const value_type& value : array){
+            function(value);
+        }
     }
 };
 
