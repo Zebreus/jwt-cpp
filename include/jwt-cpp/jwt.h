@@ -1545,7 +1545,7 @@ namespace jwt {
 		 * \return *this to allow for method chaining
 		 */
 		builder& set_header_claim(const typename json_traits::string_type& id, typename json_traits::value_type c)
-		{ header_claims[id] = std::move(c); return *this; }
+        { json_traits::object_set(header_claims, id, std::move(c)); return *this; }
 		
 		/**
 		 * Set a header claim.
@@ -1554,7 +1554,7 @@ namespace jwt {
 		 * \return *this to allow for method chaining
 		 */
 		builder& set_header_claim(const typename json_traits::string_type& id, basic_claim<json_traits> c)
-		{ header_claims[id] = c.to_json(); return *this; }
+        { json_traits::object_set(header_claims, id, c.to_json()); return *this; }
 		/**
 		 * Set a payload claim.
 		 * \param id Name of the claim
@@ -1562,7 +1562,7 @@ namespace jwt {
 		 * \return *this to allow for method chaining
 		 */
 		builder& set_payload_claim(const typename json_traits::string_type& id, typename json_traits::value_type c)
-		{ payload_claims[id] = std::move(c); return *this; }
+        { json_traits::object_set(payload_claims, id, std::move(c)); return *this; }
 		/**
 		 * Set a payload claim.
 		 * \param id Name of the claim
@@ -1570,7 +1570,7 @@ namespace jwt {
 		 * \return *this to allow for method chaining
 		 */
 		builder& set_payload_claim(const typename json_traits::string_type& id, basic_claim<json_traits> c)
-		{ payload_claims[id] = c.to_json(); return *this; }
+        { json_traits::object_set(payload_claims, id, c.to_json()); return *this; }
 		/**
 		 * Set algorithm claim
 		 * You normally don't need to do this, as the algorithm is automatically set if you don't change it.
