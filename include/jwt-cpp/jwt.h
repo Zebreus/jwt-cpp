@@ -1811,42 +1811,42 @@ namespace jwt {
 		 * \throw token_verification_exception Verification failed
 		 */
 		void verify(const decoded_jwt<json_traits>& jwt) const {
-			const typename json_traits::string_type data = jwt.get_header_base64() + "." + jwt.get_payload_base64();
-			const typename json_traits::string_type sig = jwt.get_signature();
-			const std::string algo = jwt.get_algorithm();
+            const std::string data = json_traits::string_to_std(jwt.get_header_base64()) + "." + json_traits::string_to_std(jwt.get_payload_base64());
+            const std::string sig = json_traits::string_to_std(jwt.get_signature());
+            const std::string algo = json_traits::string_to_std(jwt.get_algorithm());
 			if (algs.count(algo) == 0)
 				throw token_verification_exception("wrong algorithm");
 			algs.at(algo)->verify(data, sig);
 
 			auto assert_claim_eq = [](const decoded_jwt<json_traits>& jwt, const typename json_traits::string_type& key, const basic_claim_t& c) {
 				if (!jwt.has_payload_claim(key))
-					throw token_verification_exception("decoded_jwt is missing " + key + " claim");
+                    throw token_verification_exception("decoded_jwt is missing " + json_traits::string_to_std(key) + " claim");
 				auto jc = jwt.get_payload_claim(key);
 				if (jc.get_type() != c.get_type())
-					throw token_verification_exception("claim " + key + " type mismatch");
+                    throw token_verification_exception("claim " + json_traits::string_to_std(key) + " type mismatch");
 				if (c.get_type() == json::type::integer) {
 					if (c.as_date() != jc.as_date())
-						throw token_verification_exception("claim " + key + " does not match expected");
+                        throw token_verification_exception("claim " + json_traits::string_to_std(key) + " does not match expected");
 				}
 				else if (c.get_type() == json::type::array) {
 					auto s1 = c.as_set();
 					auto s2 = jc.as_set();
 					if (s1.size() != s2.size())
-						throw token_verification_exception("claim " + key + " does not match expected");
+                        throw token_verification_exception("claim " + json_traits::string_to_std(key) + " does not match expected");
 					auto it1 = s1.cbegin();
 					auto it2 = s2.cbegin();
 					while (it1 != s1.cend() && it2 != s2.cend()) {
 						if (*it1++ != *it2++)
-							throw token_verification_exception("claim " + key + " does not match expected");
+                            throw token_verification_exception("claim " + json_traits::string_to_std(key) + " does not match expected");
 					}
 				}
 				else if (c.get_type() == json::type::object) {
 					if (json_traits::serialize(c.to_json()) != json_traits::serialize(jc.to_json()))
-						throw token_verification_exception("claim " + key + " does not match expected");
+                        throw token_verification_exception("claim " + json_traits::string_to_std(key) + " does not match expected");
 				}
 				else if (c.get_type() == json::type::string) {
 					if (c.as_string() != jc.as_string())
-						throw token_verification_exception("claim " + key + " does not match expected");
+                        throw token_verification_exception("claim " + json_traits::string_to_std(key) + " does not match expected");
 				}
 				else throw token_verification_exception("internal error");
 			};
