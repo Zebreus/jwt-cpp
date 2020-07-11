@@ -1659,8 +1659,9 @@ namespace jwt {
 		template<typename Algo, typename Encode>
 		typename json_traits::string_type sign(const Algo& algo, Encode encode) const {
 			typename json_traits::object_type obj_header = header_claims;
-			if(header_claims.count("alg") == 0)
-				obj_header["alg"] = typename json_traits::value_type(algo.name());
+            //TODO assert that jsonobject has this count function
+            if(json_traits::object_count(header_claims, "alg") == 0)
+                json_traits::object_set(obj_header, "alg", typename json_traits::value_type(algo.name()));
 
 			typename json_traits::string_type header = encode(json_traits::serialize(typename json_traits::value_type(obj_header)));
 			typename json_traits::string_type payload = encode(json_traits::serialize(typename json_traits::value_type(payload_claims)));
@@ -2004,6 +2005,20 @@ namespace jwt {
 		static std::string serialize(const picojson::value& val){
 			return val.serialize();
 		}
+
+        //Functions for json objects
+        static int object_count(const object_type& object, const string_type& key) {
+            return object.count(key);
+        }
+
+        static const value_type object_get(const object_type& object, const string_type& key) {
+            return object.at(key);
+        }
+
+        static bool object_set(object_type& object, const string_type& key, const value_type& value) {
+            object[key] = value;
+            return true;
+        }
 	};
 
 	/**

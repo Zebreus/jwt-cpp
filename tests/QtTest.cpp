@@ -148,6 +148,20 @@ struct qt_traits {
 
         return result;
     }
+
+    //Functions for json objects
+    static int object_count(const object_type& object, const string_type& key) {
+        return (int)object.contains(key);
+    }
+
+    static const value_type object_get(const object_type& object, const string_type& key) {
+        return object[key];
+    }
+
+    static bool object_set(object_type& object, const string_type& key, const value_type& value) {
+        object[key] = value;
+        return true;
+    }
 };
 
 TEST(QtTest, BasicClaims) {

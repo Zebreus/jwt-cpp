@@ -77,6 +77,20 @@ struct nlohmann_traits {
 	static std::string serialize(const json &val) {
 		return val.dump();
 	}
+
+    //Functions for json objects
+    static int object_count(const object_type& object, const string_type& key) {
+        return object.count(key);
+    }
+
+    static const value_type object_get(const object_type& object, const string_type& key) {
+        return object.at(key);
+    }
+
+    static bool object_set(object_type& object, const string_type& key, const value_type& value) {
+        object[key] = value;
+        return true;
+    }
 };
 
 TEST(NlohmannTest, BasicClaims) {
