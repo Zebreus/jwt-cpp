@@ -1113,8 +1113,10 @@ namespace jwt {
 			 * \return input stream
 			 */
 			std::istream& operator>>(std::istream& is)
-			{
-				return is >> val;
+            {
+                std::string input_string(std::istreambuf_iterator<char>(is), {});
+                json_traits::parse(val, json_traits::string_from_std(input_string));
+                return is;
 			}
 
 			/**
@@ -1123,7 +1125,7 @@ namespace jwt {
 			 */
 			std::ostream& operator<<(std::ostream& os)
 			{
-				return os << val;
+                return os << json_traits::string_to_std(json_traits::serialize(val));
 			}
 
 			/**
