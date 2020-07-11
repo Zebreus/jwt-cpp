@@ -1661,15 +1661,17 @@ namespace jwt {
 		template<typename Algo, typename Encode>
 		typename json_traits::string_type sign(const Algo& algo, Encode encode) const {
 			typename json_traits::object_type obj_header = header_claims;
-            //TODO assert that jsonobject has this count function
             if(json_traits::object_count(header_claims, "alg") == 0)
-                json_traits::object_set(obj_header, "alg", typename json_traits::value_type(algo.name()));
+                json_traits::object_set(obj_header, "alg", typename json_traits::value_type(json_traits::string_from_std(algo.name())));
 
-			typename json_traits::string_type header = encode(json_traits::serialize(typename json_traits::value_type(obj_header)));
-			typename json_traits::string_type payload = encode(json_traits::serialize(typename json_traits::value_type(payload_claims)));
-			typename json_traits::string_type token = header + "." + payload;
+            //Quite a lot of conversions, because:
+            // The encode function should work with the json stringtype
+            // I dont want to rely on the json string implementing operator+
+            std::string header = json_traits::string_to_std(encode(json_traits::serialize(typename json_traits::value_type(obj_header))));
+            std::string payload = json_traits::string_to_std(encode(json_traits::serialize(typename json_traits::value_type(payload_claims))));
+            std::string token = header + "." + payload;
 
-			return token + "." + encode(algo.sign(token));
+            return json_traits::string_from_std(token + "." + json_traits::string_to_std(encode(json_traits::string_from_std(algo.sign(token)))));
 		}
 	#ifndef DISABLE_BASE64
 		/**
@@ -1683,7 +1685,7 @@ namespace jwt {
 		template<typename Algo>
 		typename json_traits::string_type sign(const Algo& algo) const {
 			return sign(algo, [](const typename json_traits::string_type& data) {
-				return base::trim<alphabet::base64url>(base::encode<alphabet::base64url>(data));
+                return json_traits::string_from_std(base::trim<alphabet::base64url>(base::encode<alphabet::base64url>(json_traits::string_to_std(data))));
 			});
 		}
 	#endif
