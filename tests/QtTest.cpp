@@ -8,6 +8,30 @@
 #include <QJsonDocument>
 #include "jwt-cpp/jwt.h"
 
+template<typename Value>
+class ValueCreator{
+public:
+    ValueCreator(const Value& value);
+    QJsonValue get();
+private:
+    QJsonValue jsonValue;
+};
+
+template<class Value>
+QJsonValue ValueCreator<Value>::get(){
+    return jsonValue;
+}
+
+template<>
+ValueCreator<long int>::ValueCreator(const long int& value){
+    jsonValue = QJsonValue((int)value);
+}
+
+template<class Value>
+ValueCreator<Value>::ValueCreator(const Value& value){
+    jsonValue = QJsonValue(value);
+}
+
 struct qt_traits {
     // Type Specifications
     using value_type = QJsonValue; // The generic "value type" implementation, most libraries have one
@@ -162,28 +186,72 @@ struct qt_traits {
         object[key] = value;
         return true;
     }
+
+    static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
+        for(QJsonObject::const_iterator value = object.begin(); value!=object.end(); value++){
+            function(value.key(), value.value());
+        }
+    }
+
     //Functions for json strings
-    static std::string string_toStd(const typename qt_traits::string_type& string) {
-        return std::string(string.toUtf8().constData());
+    static std::string string_to_std(const typename qt_traits::string_type& string) {
+        return std::string(string.toLatin1().constData());
     }
 
-    static qt_traits::string_type string_fromStd(const std::string& string) {
-        return QString::fromUtf8(string.data(), string.size());
+    static qt_traits::string_type string_from_std(const std::string& string) {
+        return QString::fromLatin1(string.data(), string.size());
     }
 
+    static size_t string_hash(const QString& string){
+        return std::hash<QString>()(string);
+    }
+
+    static bool string_equal(const QString& string_a, const QString& string_b){
+        return (string_a == string_b);
+    }
+
+    static bool string_compare(const QString& string_a, const QString& string_b){
+        return (string_a < string_b);
+    }
+
+    template<typename Iterator>
+    static const array_type array_construct(Iterator begin, Iterator end){
+        QJsonArray array;
+        for(auto value = begin; value!=end; value++){
+            auto realValue = *value;
+            array.append(ValueCreator<decltype(realValue)>(realValue).get());
+        }
+        return array;
+    }
+
+    static const value_type array_get(const array_type& array, const int index) {
+        return array.at(index);
+    }
+
+    static bool array_set(array_type& array, const int index, const value_type& value) {
+        array[index] = value;
+        return true;
+    }
+
+    static void array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
+        for(const value_type& value : array){
+            function(value);
+        }
+    }
 };
 
 TEST(QtTest, BasicClaims) {
 	using qt_claim = jwt::basic_claim<qt_traits>;
 
-	const auto string = nlohmann_claim(QString("string"));
-	const auto array = nlohmann_claim(QJsonArray( { 1, 2.2, QString() } ));
-	const auto integer = nlohmann_claim(159816816);
+    const auto string = qt_claim(QString("string"));
+    QJsonArray qJsonArray = { 1, 2.2, QString() };
+    const auto array = qt_claim( qJsonArray );
+    const auto integer = jwt::basic_claim<qt_traits>(77);
 }
 
 TEST(QtTest, AudienceAsString) {
 
-	std::string token =
+    QString token =
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZXN0In0."
 			"WZnM3SIiSRHsbO3O7Z2bmIzTJ4EC32HRBKfLznHhrh4";
 	auto decoded = jwt::decode<qt_traits>(token);
@@ -225,14 +293,14 @@ TEST(QtTest, SetObject) {
 	iss >> object;
 	ASSERT_EQ(object.get_type() , jwt::json::type::object);
 
-	auto token = jwt::create<qt_traits>()
+    QString token = jwt::create<qt_traits>()
 		.set_payload_claim("namespace", object)
 		.sign(jwt::algorithm::hs256("test"));
-	ASSERT_EQ(token, "eyJhbGciOiJIUzI1NiJ9.eyJuYW1lc3BhY2UiOnsiYXBpLXgiOlsxXX19.F8I6I2RcSF98bKa0IpIz09fRZtHr1CWnWKx2za-tFQA");
+    ASSERT_EQ(token, qt_traits::string_from_std("eyJhbGciOiJIUzI1NiJ9.eyJuYW1lc3BhY2UiOnsiYXBpLXgiOlsxXX19.F8I6I2RcSF98bKa0IpIz09fRZtHr1CWnWKx2za-tFQ"));
 }
 
 TEST(QtTest, VerifyTokenHS256) {
-	std::string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE";
+    QString token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE";
 
 	auto verify = jwt::verify<jwt::default_clock, qt_traits>({})
 		.allow_algorithm(jwt::algorithm::hs256{ "secret" })

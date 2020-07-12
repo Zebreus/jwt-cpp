@@ -99,12 +99,24 @@ struct nlohmann_traits {
     }
 
     //Functions for json strings
-    static std::string string_toStd(const string_type& string) {
+    static std::string string_to_std(const string_type& string) {
         return string;
     }
 
-    static string_type string_fromStd(const std::string& string) {
+    static string_type string_from_std(const std::string& string) {
         return string;
+    }
+
+    static size_t string_hash(const std::string& string){
+        return std::hash<std::string>()(string);
+    }
+
+    static bool string_equal(const std::string& string_a, const std::string& string_b){
+        return (string_a == string_b);
+    }
+
+    static bool string_compare(const std::string& string_a, const std::string& string_b){
+        return 0 < string_a.compare(string_b);
     }
 
     //Functions for json arrays
