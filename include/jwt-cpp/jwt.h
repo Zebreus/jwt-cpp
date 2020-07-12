@@ -1047,6 +1047,9 @@ namespace jwt {
 		};
 	}  // namespace details
 
+    template<typename json_traits>
+    struct default_traits;
+
 	/**
 	 * \brief a class to store a generic JSON value as claim
 	 * 
@@ -1076,16 +1079,9 @@ namespace jwt {
 
 			typename json_traits::value_type val;
 		public:
-            class key_compare{
-            public:
-                bool operator()(const typename json_traits::string_type &lhs, const typename json_traits::string_type &rhs) const
-                {
-                    return json_traits::string_less(lhs, rhs);
-                }
-            };
 
-            //TODO it would probably be smarter, to keep this set type mostly internal, as it has a custom comparator
-            using set_t = std::set<typename json_traits::string_type, key_compare>;
+            //Only public because of backwards compatibility
+            using set_t = typename default_traits<json_traits>::key_set;
 
 			basic_claim() = default;
 			basic_claim(const basic_claim&) = default;
@@ -1108,7 +1104,7 @@ namespace jwt {
 			{}
             //TODO Make deprecated constructors internal
             [[deprecated("Replaced by basic_claim(array_type), this is just for backwards compatibility")]]
-            JWT_CLAIM_EXPLICIT basic_claim(const set_t& s)
+            JWT_CLAIM_EXPLICIT basic_claim(const typename default_traits<json_traits>::key_set& s)
                 : val(json_traits::array_construct(s.begin(), s.end()))
             {}
             [[deprecated("Replaced by basic_claim(array_type), this is just for backwards compatibility")]]
@@ -1190,12 +1186,12 @@ namespace jwt {
 			 * \return content as set of strings
 			 * \throw std::bad_cast Content was not an array of string
 			 */
-			set_t as_set() const {
-				set_t res;
-                json_traits::array_for_each(json_traits::as_array(val), [&res](const typename json_traits::value_type& value){
-                    res.insert(json_traits::as_string(value));
+            typename default_traits<json_traits>::key_set as_set() const {
+                typename default_traits<json_traits>::key_set result;
+                json_traits::array_for_each(json_traits::as_array(val), [&result](const typename json_traits::value_type& value){
+                    result.insert(json_traits::as_string(value));
                 });
-				return res;
+                return result;
 			}
 
 			/**
@@ -1233,15 +1229,9 @@ namespace jwt {
 	template<typename json_traits>
 	class payload {
 		using basic_claim_t = basic_claim<json_traits>;
-	protected:
-        //TODO Change to functors like with map_t
-        std::unordered_map<typename json_traits::string_type, basic_claim_t, std::function<size_t(const typename json_traits::string_type&)>, std::function<bool(const typename json_traits::string_type&, const typename json_traits::string_type&)>> payload_claims;
+    protected:
+        typename default_traits<json_traits>::claim_map payload_claims;
     public:
-        /**
-         * Initialize payload_claims with the correct hashing and comparison functions
-         */
-        payload(): payload_claims( 100, json_traits::string_hash,json_traits::string_equal)
-        {}
 		/**
 		 * Check if issuer is present ("iss")
 		 * \return true if present, false otherwise
@@ -1291,14 +1281,14 @@ namespace jwt {
 		 * \throw std::bad_cast Claim was present but not a string (Should not happen in a valid token)
 		 */
         typename json_traits::string_type get_subject() const { return get_payload_claim(json_traits::string_from_std("sub")).as_string(); }
-        //TODO This should probably return a json_traits::array_type not a set_t
+        //TODO This should probably return a json_traits::array_type not a key_set
         /**
 		 * Get audience claim
 		 * \return audience as a set of strings
 		 * \throw std::runtime_error If claim was not present
 		 * \throw std::bad_cast Claim was present but not a set (Should not happen in a valid token)
 		 */
-        typename basic_claim_t::set_t get_audience() const {
+        typename default_traits<json_traits>::key_set get_audience() const {
             auto aud = get_payload_claim(json_traits::string_from_std("aud"));
 			if(aud.get_type() == json::type::string)
 				return { aud.as_string() };
@@ -1358,13 +1348,8 @@ namespace jwt {
 	class header {
 		using basic_claim_t = basic_claim<json_traits>;
 	protected:
-        std::unordered_map<typename json_traits::string_type, basic_claim_t, std::function<size_t(const typename json_traits::string_type&)>, std::function<bool(const typename json_traits::string_type&, const typename json_traits::string_type&)>> header_claims;
+        typename default_traits<json_traits>::claim_map header_claims;
 	public:
-        /**
-         * Initialize payload_claims with the correct hashing and comparison functions
-         */
-        header(): header_claims( 100, json_traits::string_hash,json_traits::string_equal)
-        {}
 		/**
 		 * Check if algortihm is present ("alg")
 		 * \return true if present, false otherwise
@@ -1499,7 +1484,7 @@ namespace jwt {
 
 			auto parse_claims = [](const typename json_traits::string_type& str) {
 				using basic_claim_t = basic_claim<json_traits>;
-                std::unordered_map<typename json_traits::string_type, basic_claim_t, std::function<size_t(const typename json_traits::string_type&)>, std::function<bool(const typename json_traits::string_type&, const typename json_traits::string_type&)>> res( 100, json_traits::string_hash,json_traits::string_equal);
+                typename default_traits<json_traits>::claim_map res;
 				typename json_traits::value_type val;
 				if (!json_traits::parse(val, str))
 					throw std::runtime_error("Invalid json");
@@ -1554,14 +1539,14 @@ namespace jwt {
 		 * Get all payload claims
 		 * \return map of claims
 		 */
-		std::unordered_map<typename json_traits::string_type, basic_claim<json_traits>> get_payload_claims() const {
+        typename default_traits<json_traits>::claim_map get_payload_claims() const {
 			return this->payload_claims;
 		}
 		/**
 		 * Get all header claims
 		 * \return map of claims
 		 */
-		std::unordered_map<typename json_traits::string_type, basic_claim<json_traits>> get_header_claims() const {
+        typename default_traits<json_traits>::claim_map get_header_claims() const {
 			return this->header_claims;
 		}
 	};
@@ -1746,7 +1731,7 @@ namespace jwt {
 
 		using basic_claim_t = basic_claim<json_traits>;
 		/// Required claims
-        std::unordered_map<typename json_traits::string_type, basic_claim_t, std::function<size_t(const typename json_traits::string_type&)>, std::function<bool(const typename json_traits::string_type&, const typename json_traits::string_type&)>> claims;
+        typename default_traits<json_traits>::claim_map claims;
         /// Leeway time for exp, nbf and iat
 		size_t default_leeway = 0;
 		/// Instance of clock type
@@ -1758,7 +1743,7 @@ namespace jwt {
 		 * Constructor for building a new verifier instance
 		 * \param c Clock instance
 		 */
-        explicit verifier(Clock c) : claims( 100, json_traits::string_hash,json_traits::string_equal), clock(c) {}
+        explicit verifier(Clock c) : clock(c) {}
 
 		/**
 		 * Set default leeway to use.
@@ -1801,7 +1786,7 @@ namespace jwt {
 		 * \return *this to allow chaining
 		 */
         verifier& with_subject(const typename json_traits::string_type& sub) { return with_claim(json_traits::string_from_std("sub"), basic_claim_t(sub)); }
-        //TODO deprecate both with_audience(set) methods, as the set_t type should just be internal
+        //TODO deprecate both with_audience(set) methods, as the key_set type should just be internal
         /**
          * Set an audience to check for.
          * If any of the specified audiences is not present in the token the check fails.
@@ -1810,7 +1795,7 @@ namespace jwt {
          * \deprecated Replaced by with_audience(array_type),this is just for backwards compatibility and should be internal
          */
         [[deprecated("Replaced by with_audience(array_type), this is just for backwards compatibility")]]
-        verifier& with_audience(const typename basic_claim_t::set_t& aud) { return with_claim(json_traits::string_from_std("aud"), basic_claim_t(aud.begin(), aud.end())); }
+        verifier& with_audience(const typename default_traits<json_traits>::key_set& aud) { return with_claim(json_traits::string_from_std("aud"), basic_claim_t(aud.begin(), aud.end())); }
         /**
          * Set an audience to check for.
          * If any of the specified audiences is not present in the token the check fails.
@@ -1820,7 +1805,7 @@ namespace jwt {
          */
         [[deprecated("Replaced by with_audience(array_type), this is just for backwards compatibility")]]
         verifier& with_audience(const typename std::set<typename json_traits::string_type>& aud) {
-            typename basic_claim_t::set_t correctSet(aud.begin(), aud.end());
+            typename default_traits<json_traits>::key_set correctSet(aud.begin(), aud.end());
             return with_audience(correctSet);
         }
         /**
@@ -1951,7 +1936,44 @@ namespace jwt {
 		}
 	};
 
-	/**
+    /** TODO
+     * A proxy to the functions of json_traits
+     * Asserts that json_traits has all neccessary functions and
+     * provides default implementations if some are missing
+     * Providing claim_map and key_set
+     */
+    template<typename json_traits>
+    struct default_traits{
+    private:
+        class key_compare{
+        public:
+            bool operator()(const typename json_traits::string_type &lhs, const typename json_traits::string_type &rhs) const
+            {
+                return json_traits::string_less(lhs, rhs);
+            }
+        };
+
+        class key_equal{
+        public:
+            bool operator()(const typename json_traits::string_type &lhs, const typename json_traits::string_type &rhs) const
+            {
+                return json_traits::string_equal(lhs, rhs);
+            }
+        };
+
+        class key_hash{
+        public:
+            bool operator()(const typename json_traits::string_type &string) const
+            {
+                return json_traits::string_hash(string);
+            }
+        };
+    public:
+        using claim_map = std::unordered_map<typename json_traits::string_type, basic_claim<json_traits>, key_hash, key_equal>;
+        using key_set = std::set<typename json_traits::string_type, key_compare>;
+    };
+
+    /**
 	 * Create a verifier using the given clock
 	 * \param c Clock instance to use
 	 * \return verifier instance
