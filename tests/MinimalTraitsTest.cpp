@@ -183,7 +183,7 @@ struct minimal_traits {
         return (string_a.real_value == string_b.real_value);
     }
 
-    static bool string_compare(const string_type& string_a, const string_type& string_b){
+    static bool string_less(const string_type& string_a, const string_type& string_b){
         return 0 < string_a.real_value.compare(string_b.real_value);
     }
 

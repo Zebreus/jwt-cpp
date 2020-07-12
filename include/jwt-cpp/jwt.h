@@ -1080,7 +1080,7 @@ namespace jwt {
             public:
                 bool operator()(const typename json_traits::string_type &lhs, const typename json_traits::string_type &rhs) const
                 {
-                    return json_traits::string_compare(lhs, rhs);
+                    return json_traits::string_less(lhs, rhs);
                 }
             };
 
@@ -2098,15 +2098,15 @@ namespace jwt {
             return string;
         }
 
-        static size_t string_hash(const std::string& string){
-            return std::hash<std::string>()(string);
+        static size_t string_hash(const string_type& string){
+            return std::hash<string_type>()(string);
         }
 
-        static bool string_equal(const std::string& string_a, const std::string& string_b){
+        static bool string_equal(const string_type& string_a, const string_type& string_b){
             return (string_a == string_b);
         }
 
-        static bool string_compare(const std::string& string_a, const std::string& string_b){
+        static bool string_less(const string_type& string_a, const string_type& string_b){
             return 0 < string_a.compare(string_b);
         }
 

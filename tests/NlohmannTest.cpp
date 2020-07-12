@@ -115,7 +115,7 @@ struct nlohmann_traits {
         return (string_a == string_b);
     }
 
-    static bool string_compare(const std::string& string_a, const std::string& string_b){
+    static bool string_less(const std::string& string_a, const std::string& string_b){
         return 0 < string_a.compare(string_b);
     }
 

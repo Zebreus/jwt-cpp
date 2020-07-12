@@ -210,7 +210,7 @@ struct qt_traits {
         return (string_a == string_b);
     }
 
-    static bool string_compare(const QString& string_a, const QString& string_b){
+    static bool string_less(const QString& string_a, const QString& string_b){
         return (string_a < string_b);
     }
 
