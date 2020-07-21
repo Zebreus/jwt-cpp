@@ -2300,23 +2300,6 @@ namespace jwt {
             return json_traits::serialize(val);
         }
 
-        /*
-        // temporary test assertions
-        static_assert(details::has_object_count<json_traits, object_type, string_type>::value, "has object_count");
-        static_assert(details::has_object_get<json_traits, value_type, object_type, string_type>::value, "has object_get");
-        static_assert(details::has_object_set<json_traits, value_type, object_type, string_type>::value, "has object_set");
-        static_assert(details::has_object_for_each<json_traits, value_type, object_type, string_type>::value, "has object_for_each");
-        static_assert(details::has_string_to_std<json_traits, string_type>::value, "has string_to_std");
-        static_assert(details::has_string_to_std<json_traits, string_type>::value, "has string_from_std");
-        static_assert(details::has_string_hash<json_traits, string_type>::value, "has string_hash");
-        static_assert(details::has_string_equal<json_traits, string_type>::value, "has string_equal");
-        static_assert(details::has_string_less<json_traits, string_type>::value, "has string_less");
-        static_assert(details::has_array_construct<json_traits, array_type, typename key_set::iterator>::value, "has array_construct");
-        static_assert(details::has_array_set<json_traits, value_type, array_type>::value, "has array_set");
-        static_assert(details::has_array_get<json_traits, value_type, array_type>::value, "has array_get");
-        static_assert(details::has_array_for_each<json_traits, value_type, array_type>::value, "has array_for_each");
-        */
-
         //Functions for json objects
         template<class Q = json_traits>
         static typename std::enable_if<details::has_object_count<Q, object_type, string_type>::value, int>::type object_count(const object_type& object, const string_type& key) {
