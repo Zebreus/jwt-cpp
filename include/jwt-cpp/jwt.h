@@ -2308,8 +2308,9 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_object_count<Q, object_type, string_type>::value, int>::type object_count(const object_type& object, const string_type& key) {
-            //TODO default implementation
-            return 5;
+            //TODO assert method: int object_type::count(string_type)
+            return object.count(key);
+            //TODO check other common names for methods that act like count
         }
 
         template<class Q = json_traits>
@@ -2319,8 +2320,11 @@ namespace jwt {
 
         template<class Q = json_traits>
         static const typename std::enable_if<!details::has_object_get<Q, value_type, object_type, string_type>::value, value_type>::type object_get(const object_type& object, const string_type& key) {
-            //TODO default implementation
-            return value_type(5);
+            //TODO assert method: value_type& object_type::operator[](string_type)
+            return object[key];
+            //TODO use at if [] nonexistent
+            //     assert method: value_type object_type::at(string_type)
+            //return array.at(index);
         }
 
         template<class Q = json_traits>
@@ -2330,8 +2334,9 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_object_set<Q, value_type, object_type, string_type>::value, bool>::type object_set(object_type& object, const string_type& key, const value_type& value) {
-            //TODO default implementation
-            return false;
+            //TODO assert method: value_type& object_type::operator[](string_type)
+            object[key] = value;
+            return true;
         }
 
         template<class Q = json_traits>
@@ -2341,8 +2346,10 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_object_for_each<Q, value_type, object_type, string_type>::value, void>::type object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
-            //TODO default implementation
-            return;
+            //TODO assert that object is range_expression and produces iterators to something with first and second member functions
+            for(const auto& value : object){
+                function(value.first, value.second);
+            }
         }
 
         //Functions for json strings
@@ -2353,8 +2360,9 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_string_to_std<Q, string_type>::value, std::string>::type string_to_std(const string_type& string) {
-            //TODO default implementation
-            return "";
+            //TODO assert that string_type is std::string or a implicit conversion exists
+            return string;
+            //TODO maybe add support for explicit conversion
         }
 
         template<class Q = json_traits>
@@ -2364,8 +2372,9 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_string_from_std<Q, string_type>::value, string_type>::type string_from_std(const std::string& string) {
-            //TODO default implementation
-            return "";
+            //TODO assert that string_type is std::string or a implicit conversion exists
+            return string;
+            //TODO maybe add support for explicit conversion
         }
 
         template<class Q = json_traits>
@@ -2375,8 +2384,8 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_string_hash<Q, string_type>::value, size_t>::type string_hash(const string_type& string){
-            //TODO default implementation
-            return 0;
+            //TODO assert that std::hash<string_type> is defined and valid
+            return std::hash<string_type>()(string);
         }
 
         template<class Q = json_traits>
@@ -2386,8 +2395,8 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_string_equal<Q, string_type>::value, bool>::type string_equal(const string_type& string_a, const string_type& string_b){
-            //TODO default implementation
-            return false;
+            //TODO assert that operator== or std::equal_to is defined
+            return string_a == string_b;
         }
 
         template<class Q = json_traits>
@@ -2397,8 +2406,8 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_string_less<Q, string_type>::value, bool>::type string_less(const string_type& string_a, const string_type& string_b){
-            //TODO default implementation
-            return false;
+            //TODO assert that operator< or std::less is defined
+            return string_a < string_b;
         }
 
         //Functions for json arrays
@@ -2409,8 +2418,9 @@ namespace jwt {
 
         template<typename Iterator, class Q = json_traits>
         static const typename std::enable_if<!details::has_array_construct<Q, array_type, Iterator>::value, array_type>::type array_construct(Iterator begin, Iterator end){
-            //TODO default implementation
-            return array_type();
+            //TODO assert constructor
+            //TODO assert that iterator is valid iterator somewhere
+            return array_type(begin, end);
         }
 
         template<class Q = json_traits>
@@ -2420,8 +2430,11 @@ namespace jwt {
 
         template<class Q = json_traits>
         static const typename std::enable_if<!details::has_array_get<Q, value_type, array_type>::value, value_type>::type array_get(const array_type& array, const int index) {
-            //TODO default implementation
-            return value_type(0);
+            //TODO assert method: value_type& array_type::operator[](int)
+            return array[index];
+            //TODO use at if [] nonexistent
+            //     assert method: value_type array_type::at(int)
+            //return array.at(index);
         }
 
         template<class Q = json_traits>
@@ -2431,8 +2444,9 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_array_set<Q, value_type, array_type>::value, bool>::type array_set(array_type& array, const int index, const value_type& value) {
-            //TODO default implementation
-            return false;
+            //TODO assert method: value_type& array_type::operator[](int)
+            array[index] = value;
+            return true;
         }
 
         template<class Q = json_traits>
@@ -2442,8 +2456,10 @@ namespace jwt {
 
         template<class Q = json_traits>
         static typename std::enable_if<!details::has_array_for_each<Q, value_type, array_type>::value, void>::type array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
-            //TODO default implementation
-            return;
+            //TODO assert that array is a range_expression
+            for(const value_type& value : array){
+                function(value);
+            }
         }
     };
 
@@ -2554,7 +2570,7 @@ namespace jwt {
 		static double as_number(const picojson::value& val) {
 			if (!val.is<double>())
 				throw std::bad_cast();
-			return val.get<double>();
+            return val.get<double>();
 		}
 
 		static bool parse(picojson::value& val, const std::string& str){
@@ -2564,68 +2580,6 @@ namespace jwt {
 		static std::string serialize(const picojson::value& val){
 			return val.serialize();
 		}
-
-        //Functions for json objects
-        static int object_count(const object_type& object, const string_type& key) {
-            return object.count(key);
-        }
-
-        static const value_type object_get(const object_type& object, const string_type& key) {
-            return object.at(key);
-        }
-
-        static bool object_set(object_type& object, const string_type& key, const value_type& value) {
-            object[key] = value;
-            return true;
-        }
-
-        static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
-            for(const auto& value : object){
-                function(value.first, value.second);
-            }
-        }
-
-        //Functions for json strings
-        static std::string string_to_std(const string_type& string) {
-            return string;
-        }
-
-        static string_type string_from_std(const std::string& string) {
-            return string;
-        }
-
-        static size_t string_hash(const string_type& string){
-            return std::hash<string_type>()(string);
-        }
-
-        static bool string_equal(const string_type& string_a, const string_type& string_b){
-            return (string_a == string_b);
-        }
-
-        static bool string_less(const string_type& string_a, const string_type& string_b){
-            return 0 < string_a.compare(string_b);
-        }
-
-        //Functions for json arrays
-        template<typename Iterator>
-        static const array_type array_construct(Iterator begin, Iterator end){
-            return array_type(begin, end);
-        }
-
-        static const value_type array_get(const array_type& array, const int index) {
-            return array.at(index);
-        }
-
-        static bool array_set(array_type& array, const int index, const value_type& value) {
-            array[index] = value;
-            return true;
-        }
-
-        static void array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
-            for(const value_type& value : array){
-                function(value);
-            }
-        }
 	};
 
 	/**
