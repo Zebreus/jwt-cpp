@@ -1046,6 +1046,10 @@ namespace jwt {
 				is_valid_json_array<value_type, array_type>::value;
 		};
 
+        // False type, but as a template
+        template<typename T>
+        struct fail : std::false_type{};
+
         // Checks whether types support specific actions
         // Implicit conversion to std::string
         template<typename string_type>
@@ -2384,28 +2388,88 @@ namespace jwt {
         }
 
         //Functions for json strings
+        //json_traits has a correct string_to_std method
         template<class Q = json_traits>
-        static typename std::enable_if<details::has_string_to_std<Q, string_type>::value, std::string>::type string_to_std(const string_type& string) {
+        static typename std::enable_if<
+            details::has_string_to_std<Q, string_type>::value,
+            std::string
+        >::type string_to_std(const string_type& string) {
             return json_traits::string_to_std(string);
         }
 
-        template<class Q = json_traits>
-        static typename std::enable_if<!details::has_string_to_std<Q, string_type>::value, std::string>::type string_to_std(const string_type& string) {
-            //TODO assert that string_type is std::string or a implicit conversion exists
+        //string_type has a implicit conversion from string_type to std::string
+        template<class Q = json_traits> static
+        typename std::enable_if<
+            details::is_convertible_to_std_string<string_type>::value &&
+            !details::has_string_to_std<Q, string_type>::value,
+            std::string
+        >::type
+        string_to_std(const string_type& string) {
             return string;
-            //TODO maybe add support for explicit conversion
         }
 
+        //string_type has a explicit conversion from string_type to std::string
+        template<class Q = json_traits> static
+        typename std::enable_if<
+            details::is_explicit_convertible_to_std_string<string_type>::value &&
+            !details::has_string_to_std<Q, string_type>::value,
+            std::string
+        >::type
+        string_to_std(const string_type& string) {
+            return std::string(string);
+        }
+
+        //No available conversion to std::string
         template<class Q = json_traits>
-        static typename std::enable_if<details::has_string_from_std<Q, string_type>::value, string_type>::type string_from_std(const std::string& string) {
+        static typename std::enable_if<
+            !details::is_convertible_to_std_string<string_type>::value &&
+            !details::is_explicit_convertible_to_std_string<string_type>::value &&
+            !details::has_string_to_std<Q, string_type>::value,
+            string_type
+        >::type string_to_std(const std::string& string) {
+            //Will always fail and print error
+            static_assert(details::fail<Q>::value , "No valid string_to_std method in json_traits and no implicit or explicit conversion from string_type to std::string");
+        }
+
+        //json_traits has a string_from_std
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            details::has_string_from_std<Q, string_type>::value,
+            string_type
+        >::type string_from_std(const std::string& string) {
             return json_traits::string_from_std(string);
         }
 
+        //string_type has a implicit conversion from std::string to string_type
         template<class Q = json_traits>
-        static typename std::enable_if<!details::has_string_from_std<Q, string_type>::value, string_type>::type string_from_std(const std::string& string) {
-            //TODO assert that string_type is std::string or a implicit conversion exists
+        static typename std::enable_if<
+            details::is_convertible_from_std_string<string_type>::value &&
+            !details::has_string_from_std<Q, string_type>::value,
+            string_type
+        >::type string_from_std(const std::string& string) {
             return string;
-            //TODO maybe add support for explicit conversion
+        }
+
+        //string_type has a explicit conversion from std::string to string_type
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            details::is_explicit_convertible_from_std_string<string_type>::value &&
+            !details::has_string_from_std<Q, string_type>::value,
+            string_type
+        >::type string_from_std(const std::string& string) {
+            return string_type(string);
+        }
+
+        //No available conversion from std::string
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            !details::is_convertible_from_std_string<string_type>::value &&
+            !details::is_explicit_convertible_from_std_string<string_type>::value &&
+            !details::has_string_from_std<Q, string_type>::value,
+            string_type
+        >::type string_from_std(const std::string& string) {
+            //Will always fail and print error
+            static_assert(details::fail<Q>::value , "No valid string_from_std method in json_traits and no implicit or explicit conversion from std::string to string_type");
         }
 
         template<class Q = json_traits>
