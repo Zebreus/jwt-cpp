@@ -2300,60 +2300,167 @@ namespace jwt {
             return json_traits::serialize(val);
         }
 
+        /*
+        // temporary test assertions
+        static_assert(details::has_object_count<json_traits, object_type, string_type>::value, "has object_count");
+        static_assert(details::has_object_get<json_traits, value_type, object_type, string_type>::value, "has object_get");
+        static_assert(details::has_object_set<json_traits, value_type, object_type, string_type>::value, "has object_set");
+        static_assert(details::has_object_for_each<json_traits, value_type, object_type, string_type>::value, "has object_for_each");
+        static_assert(details::has_string_to_std<json_traits, string_type>::value, "has string_to_std");
+        static_assert(details::has_string_to_std<json_traits, string_type>::value, "has string_from_std");
+        static_assert(details::has_string_hash<json_traits, string_type>::value, "has string_hash");
+        static_assert(details::has_string_equal<json_traits, string_type>::value, "has string_equal");
+        static_assert(details::has_string_less<json_traits, string_type>::value, "has string_less");
+        static_assert(details::has_array_construct<json_traits, array_type, typename key_set::iterator>::value, "has array_construct");
+        static_assert(details::has_array_set<json_traits, value_type, array_type>::value, "has array_set");
+        static_assert(details::has_array_get<json_traits, value_type, array_type>::value, "has array_get");
+        static_assert(details::has_array_for_each<json_traits, value_type, array_type>::value, "has array_for_each");
+        */
+
         //Functions for json objects
-        static int object_count(const object_type& object, const string_type& key) {
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_object_count<Q, object_type, string_type>::value, int>::type object_count(const object_type& object, const string_type& key) {
             return json_traits::object_count(object, key);
         }
 
-        static const value_type object_get(const object_type& object, const string_type& key) {
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_object_count<Q, object_type, string_type>::value, int>::type object_count(const object_type& object, const string_type& key) {
+            //TODO default implementation
+            return 5;
+        }
+
+        template<class Q = json_traits>
+        static const typename std::enable_if<details::has_object_get<Q, value_type, object_type, string_type>::value, value_type>::type object_get(const object_type& object, const string_type& key) {
             return json_traits::object_get(object, key);
         }
 
-        static bool object_set(object_type& object, const string_type& key, const value_type& value) {
+        template<class Q = json_traits>
+        static const typename std::enable_if<!details::has_object_get<Q, value_type, object_type, string_type>::value, value_type>::type object_get(const object_type& object, const string_type& key) {
+            //TODO default implementation
+            return value_type(5);
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_object_set<Q, value_type, object_type, string_type>::value, bool>::type object_set(object_type& object, const string_type& key, const value_type& value) {
             return json_traits::object_set(object,key,value);
         }
 
-        static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_object_set<Q, value_type, object_type, string_type>::value, bool>::type object_set(object_type& object, const string_type& key, const value_type& value) {
+            //TODO default implementation
+            return false;
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_object_for_each<Q, value_type, object_type, string_type>::value, void>::type object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
             return json_traits::object_for_each(object,function);
         }
 
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_object_for_each<Q, value_type, object_type, string_type>::value, void>::type object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
+            //TODO default implementation
+            return;
+        }
+
         //Functions for json strings
-        static std::string string_to_std(const string_type& string) {
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_string_to_std<Q, string_type>::value, std::string>::type string_to_std(const string_type& string) {
             return json_traits::string_to_std(string);
         }
 
-        static string_type string_from_std(const std::string& string) {
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_string_to_std<Q, string_type>::value, std::string>::type string_to_std(const string_type& string) {
+            //TODO default implementation
+            return "";
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_string_from_std<Q, string_type>::value, string_type>::type string_from_std(const std::string& string) {
             return json_traits::string_from_std(string);
         }
 
-        static size_t string_hash(const string_type& string){
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_string_from_std<Q, string_type>::value, string_type>::type string_from_std(const std::string& string) {
+            //TODO default implementation
+            return "";
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_string_hash<Q, string_type>::value, size_t>::type string_hash(const string_type& string){
             return json_traits::string_hash(string);
         }
 
-        static bool string_equal(const string_type& string_a, const string_type& string_b){
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_string_hash<Q, string_type>::value, size_t>::type string_hash(const string_type& string){
+            //TODO default implementation
+            return 0;
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_string_equal<Q, string_type>::value, bool>::type string_equal(const string_type& string_a, const string_type& string_b){
             return json_traits::string_equal(string_a, string_b);
         }
 
-        static bool string_less(const string_type& string_a, const string_type& string_b){
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_string_equal<Q, string_type>::value, bool>::type string_equal(const string_type& string_a, const string_type& string_b){
+            //TODO default implementation
+            return false;
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_string_less<Q, string_type>::value, bool>::type string_less(const string_type& string_a, const string_type& string_b){
             return json_traits::string_less(string_a, string_b);
         }
 
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_string_less<Q, string_type>::value, bool>::type string_less(const string_type& string_a, const string_type& string_b){
+            //TODO default implementation
+            return false;
+        }
+
         //Functions for json arrays
-        template<typename Iterator>
-        static const array_type array_construct(Iterator begin, Iterator end){
+        template<typename Iterator, class Q = json_traits>
+        static const typename std::enable_if<details::has_array_construct<Q, array_type, Iterator>::value, array_type>::type array_construct(Iterator begin, Iterator end){
             return json_traits::array_construct(begin, end);
         }
 
-        static const value_type array_get(const array_type& array, const int index) {
+        template<typename Iterator, class Q = json_traits>
+        static const typename std::enable_if<!details::has_array_construct<Q, array_type, Iterator>::value, array_type>::type array_construct(Iterator begin, Iterator end){
+            //TODO default implementation
+            return array_type();
+        }
+
+        template<class Q = json_traits>
+        static const typename std::enable_if<details::has_array_get<Q, value_type, array_type>::value, value_type>::type array_get(const array_type& array, const int index) {
             return json_traits::array_get(array, index);
         }
 
-        static bool array_set(array_type& array, const int index, const value_type& value) {
+        template<class Q = json_traits>
+        static const typename std::enable_if<!details::has_array_get<Q, value_type, array_type>::value, value_type>::type array_get(const array_type& array, const int index) {
+            //TODO default implementation
+            return value_type(0);
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_array_set<Q, value_type, array_type>::value, bool>::type array_set(array_type& array, const int index, const value_type& value) {
             return json_traits::array_set(array, index, value);
         }
 
-        static void array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_array_set<Q, value_type, array_type>::value, bool>::type array_set(array_type& array, const int index, const value_type& value) {
+            //TODO default implementation
+            return false;
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<details::has_array_for_each<Q, value_type, array_type>::value, void>::type array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
             return json_traits::array_for_each(array, function);
+        }
+
+        template<class Q = json_traits>
+        static typename std::enable_if<!details::has_array_for_each<Q, value_type, array_type>::value, void>::type array_for_each(const array_type& array, std::function<void(const value_type&)> function) {
+            //TODO default implementation
+            return;
         }
     };
 
