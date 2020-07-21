@@ -1045,6 +1045,179 @@ namespace jwt {
 				is_valid_json_value<value_type>::value &&
 				is_valid_json_array<value_type, array_type>::value;
 		};
+
+        // Checks for functions in user supplied json_traits
+        // based on: https://stackoverflow.com/a/23133904
+
+        template<typename json_traits, typename object_type, typename string_type>
+        struct has_object_count {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<int(*)(const object_type&, const string_type&), &U::object_count>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename object_type, typename string_type>
+        struct has_object_get {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<const value_type(*)(const object_type&, const string_type&), &U::object_get>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename object_type, typename string_type>
+        struct has_object_set {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<bool(*)(object_type&, const string_type&, const value_type&), &U::object_set>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename object_type, typename string_type>
+        struct has_object_for_each {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<void(*)(const object_type&, std::function<void(const string_type&, const value_type&)>), &U::object_for_each>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename string_type>
+        struct has_string_to_std {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<std::string(*)(const string_type&), &U::string_to_std>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename string_type>
+        struct has_string_from_std {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<string_type(*)(const std::string&), &U::string_from_std>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename string_type>
+        struct has_string_hash {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<size_t(*)(const string_type&), &U::string_hash>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename string_type>
+        struct has_string_equal {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<bool(*)(const string_type&, const string_type&), &U::string_equal>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename string_type>
+        struct has_string_less {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<bool(*)(const string_type&, const string_type&), &U::string_less>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename array_type, typename Iterator>
+        struct has_array_construct {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<const array_type(*)(Iterator, Iterator), &U::array_construct>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename array_type>
+        struct has_array_get {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<const value_type(*)(const array_type&, const int), &U::array_get>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename array_type>
+        struct has_array_set {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<bool(*)(array_type&, const int, const value_type&), &U::array_set>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
+        template<typename json_traits, typename value_type, typename array_type>
+        struct has_array_for_each {
+            template<typename U, U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<void(*)(const array_type&, std::function<void(const value_type&)>), &U::array_for_each>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<json_traits>(0))::value;
+        };
+
 	}  // namespace details
 
     template<typename user_json_traits>
