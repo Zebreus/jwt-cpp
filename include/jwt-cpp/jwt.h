@@ -1046,7 +1046,38 @@ namespace jwt {
 				is_valid_json_array<value_type, array_type>::value;
 		};
 
-        // Checks for functions in user supplied json_traits
+        // Checks whether types support specific actions
+        // Implicit conversion to std::string
+        template<typename string_type>
+        struct is_convertible_to_std_string{
+            static constexpr bool value =
+                std::is_convertible<string_type, std::string>::value;
+        };
+
+        // Only explicit conversion to std::string
+        template<typename string_type>
+        struct is_explicit_convertible_to_std_string{
+            static constexpr bool value =
+                !std::is_convertible<string_type, std::string>::value &&
+                std::is_constructible<std::string, string_type>::value;
+        };
+
+        // Implicit conversion from std::string
+        template<typename string_type>
+        struct is_convertible_from_std_string{
+            static constexpr bool value =
+                std::is_convertible<std::string, string_type>::value;
+        };
+
+        // Only explicit conversion from std::string
+        template<typename string_type>
+        struct is_explicit_convertible_from_std_string{
+            static constexpr bool value =
+                !std::is_convertible<std::string, string_type>::value &&
+                std::is_constructible<string_type, std::string>::value;
+        };
+
+        // Checks for methods in user supplied json_traits
         // based on: https://stackoverflow.com/a/23133904
 
         template<typename json_traits, typename object_type, typename string_type>
