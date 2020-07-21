@@ -11,7 +11,13 @@ public:
     minimal_string(const minimal_string& base):
         real_value(base.real_value)
     {}
-    minimal_string(const std::string& value):
+//    minimal_string(const std::string& value):
+//        real_value(value)
+//    {}
+//    explicit minimal_string(const std::string& value):
+//        real_value(value)
+//    {}
+    minimal_string(const std::string& value, int preventCopyConstructor):
         real_value(value)
     {}
     bool operator<(const minimal_string &other) const
@@ -111,7 +117,7 @@ struct minimal_traits {
     static string_type as_string(const value_type& val) {
         if (!val.real_value.is<std::string>())
             throw std::bad_cast();
-        return minimal_string(val.real_value.get<std::string>());
+        return minimal_string(val.real_value.get<std::string>(),1);
     }
 
     static array_type as_array(const value_type& val) {
@@ -143,7 +149,7 @@ struct minimal_traits {
     }
 
     static string_type serialize(const value_type& val){
-        return val.real_value.serialize();
+        return minimal_string(val.real_value.serialize(),1);
     }
 
     //Functions for json objects
@@ -162,7 +168,7 @@ struct minimal_traits {
 
     static void object_for_each(const object_type& object, std::function<void(const string_type&, const value_type&)> function) {
         for(const auto& value : object.real_value){
-            function(value.first, value.second);
+            function(minimal_string(value.first,1), value.second);
         }
     }
 
@@ -172,7 +178,7 @@ struct minimal_traits {
     }
 
     static string_type string_from_std(const std::string& string) {
-        return minimal_string(string);
+        return minimal_string(string,1);
     }
 
     static size_t string_hash(const string_type& string){
@@ -217,17 +223,17 @@ struct minimal_traits {
 TEST(MinimalTraitsTest, BasicClaims) {
     using minimal_claim = jwt::basic_claim<minimal_traits>;
 
-    const auto string = minimal_claim(std::string("string"));
+    const auto string = minimal_claim(jwt::default_traits<minimal_traits>::string_from_std("string"));
 
-    const auto array = minimal_claim(std::set<minimal_string>{minimal_traits::string_from_std("string"), minimal_traits::string_from_std("string")});
+    const auto array = minimal_claim(std::set<minimal_string>{jwt::default_traits<minimal_traits>::string_from_std("string"), jwt::default_traits<minimal_traits>::string_from_std("string")});
     const auto integer = minimal_claim((int64_t)159816816);
 }
 
 TEST(MinimalTraitsTest, AudienceAsString) {
 
-    std::string token =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZXN0In0."
-            "WZnM3SIiSRHsbO3O7Z2bmIzTJ4EC32HRBKfLznHhrh4";
+    minimal_string token = jwt::default_traits<minimal_traits>::string_from_std(
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZXN0In0."
+        "WZnM3SIiSRHsbO3O7Z2bmIzTJ4EC32HRBKfLznHhrh4");
     auto decoded = jwt::decode<minimal_traits>(token);
 
     ASSERT_TRUE(decoded.has_algorithm());
@@ -242,11 +248,13 @@ TEST(MinimalTraitsTest, AudienceAsString) {
     ASSERT_FALSE(decoded.has_issued_at());
     ASSERT_FALSE(decoded.has_id());
 
-    ASSERT_EQ("HS256",  minimal_traits::string_to_std(decoded.get_algorithm()));
-    ASSERT_EQ("JWT", minimal_traits::string_to_std(decoded.get_type()));
+    std::string test = jwt::default_traits<minimal_traits>::string_to_std(decoded.get_algorithm());
+
+    ASSERT_EQ("HS256",  jwt::default_traits<minimal_traits>::string_to_std(decoded.get_algorithm()));
+    ASSERT_EQ("JWT", jwt::default_traits<minimal_traits>::string_to_std(decoded.get_type()));
     auto aud = decoded.get_audience();
     ASSERT_EQ(1, aud.size());
-    ASSERT_EQ("test", minimal_traits::string_to_std(*aud.begin()));
+    ASSERT_EQ("test", jwt::default_traits<minimal_traits>::string_to_std(*aud.begin()));
 }
 
 TEST(MinimalTraitsTest, SetArray) {
@@ -256,9 +264,9 @@ TEST(MinimalTraitsTest, SetArray) {
         10
     };
     auto token = jwt::create<minimal_traits>()
-        .set_payload_claim(minimal_string("test"), jwt::basic_claim<minimal_traits>(vect.begin(), vect.end()))
+        .set_payload_claim(minimal_string("test",1), jwt::basic_claim<minimal_traits>(vect.begin(), vect.end()))
         .sign(jwt::algorithm::none{});
-    ASSERT_EQ( minimal_traits::string_to_std(token), "eyJhbGciOiJub25lIn0.eyJ0ZXN0IjpbMTAwLDIwLDEwXX0.");
+    ASSERT_EQ( jwt::default_traits<minimal_traits>::string_to_std(token), "eyJhbGciOiJub25lIn0.eyJ0ZXN0IjpbMTAwLDIwLDEwXX0.");
 }
 
 TEST(MinimalTraitsTest, SetObject) {
@@ -268,17 +276,17 @@ TEST(MinimalTraitsTest, SetObject) {
     ASSERT_EQ(object.get_type() , jwt::json::type::object);
 
     auto token = jwt::create<minimal_traits>()
-        .set_payload_claim(minimal_string("namespace"), object)
+        .set_payload_claim(minimal_string("namespace",1), object)
         .sign(jwt::algorithm::hs256("test"));
-    ASSERT_EQ( minimal_traits::string_to_std(token), "eyJhbGciOiJIUzI1NiJ9.eyJuYW1lc3BhY2UiOnsiYXBpLXgiOlsxXX19.F8I6I2RcSF98bKa0IpIz09fRZtHr1CWnWKx2za-tFQA");
+    ASSERT_EQ( jwt::default_traits<minimal_traits>::string_to_std(token), "eyJhbGciOiJIUzI1NiJ9.eyJuYW1lc3BhY2UiOnsiYXBpLXgiOlsxXX19.F8I6I2RcSF98bKa0IpIz09fRZtHr1CWnWKx2za-tFQA");
 }
 
 TEST(MinimalTraitsTest, VerifyTokenHS256) {
-    std::string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE";
+    minimal_string token = jwt::default_traits<minimal_traits>::string_from_std("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCJ9.AbIJTDMFc7yUa5MhvcP03nJPyCPzZtQcGEp-zWfOkEE");
 
     jwt::verifier<jwt::default_clock, minimal_traits> verify = jwt::verify<jwt::default_clock, minimal_traits>({})
         .allow_algorithm(jwt::algorithm::hs256{ "secret" })
-        .with_issuer(minimal_string("auth0"));
+        .with_issuer(minimal_string("auth0",1));
 
     jwt::decoded_jwt<minimal_traits> decoded_token = jwt::decode<minimal_traits>(token);
     verify.verify(decoded_token);
