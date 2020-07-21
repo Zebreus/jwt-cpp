@@ -1081,6 +1081,20 @@ namespace jwt {
                 std::is_constructible<string_type, std::string>::value;
         };
 
+        // std::hash<string_type>::operator() exists
+        template<typename T>
+        struct is_hashable {
+            template<typename U,U> struct Check;
+
+            template<typename U>
+            static std::true_type Test(Check<decltype(&U::operator()), &U::operator()>*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value = decltype(Test<std::hash<T>>(0))::value;
+        };
+
         // Checks for methods in user supplied json_traits
         // based on: https://stackoverflow.com/a/23133904
 
@@ -2427,7 +2441,7 @@ namespace jwt {
             !details::has_string_to_std<Q, string_type>::value,
             string_type
         >::type string_to_std(const std::string& string) {
-            //Will always fail and print error
+            //Fail and print custom diagnostic message
             static_assert(details::fail<Q>::value , "No valid string_to_std method in json_traits and no implicit or explicit conversion from string_type to std::string");
         }
 
@@ -2468,19 +2482,38 @@ namespace jwt {
             !details::has_string_from_std<Q, string_type>::value,
             string_type
         >::type string_from_std(const std::string& string) {
-            //Will always fail and print error
+            //Fail and print custom diagnostic message
             static_assert(details::fail<Q>::value , "No valid string_from_std method in json_traits and no implicit or explicit conversion from std::string to string_type");
         }
 
+        //json_traits has a string_hash method
         template<class Q = json_traits>
-        static typename std::enable_if<details::has_string_hash<Q, string_type>::value, size_t>::type string_hash(const string_type& string){
+        static typename std::enable_if<
+            details::has_string_hash<Q, string_type>::value,
+            size_t
+        >::type string_hash(const string_type& string){
             return json_traits::string_hash(string);
         }
 
+        //string_type is hashable (std::hash<string_type> is implemented)
         template<class Q = json_traits>
-        static typename std::enable_if<!details::has_string_hash<Q, string_type>::value, size_t>::type string_hash(const string_type& string){
-            //TODO assert that std::hash<string_type> is defined and valid
+        static typename std::enable_if<
+            details::is_hashable<string_type>::value &&
+            !details::has_string_hash<Q, string_type>::value,
+            size_t
+        >::type string_hash(const string_type& string){
             return std::hash<string_type>()(string);
+        }
+
+        //No available hash function for string_type
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            !details::is_hashable<string_type>::value &&
+            !details::has_string_hash<Q, string_type>::value,
+            size_t
+        >::type string_hash(const string_type& string){
+            //Fail and print custom diagnostic message
+            static_assert(details::fail<Q>::value , "No valid string_hash method in json_traits and no implementation of std::hash<string_type>");
         }
 
         template<class Q = json_traits>
