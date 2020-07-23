@@ -1108,6 +1108,32 @@ namespace jwt {
                     decltype(Test<string_type>(0))::value;
         };
 
+        // you can compare two strings using <
+        template<typename string_type>
+        struct has_operator_less {
+            template<typename U>
+            static std::true_type Test(decltype(*(U*)(0) < *(U*)(0))*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value =
+                    decltype(Test<string_type>(0))::value;
+        };
+
+        // you can compare two strings using >
+        template<typename string_type>
+        struct has_operator_greater {
+            template<typename U>
+            static std::true_type Test(decltype(*(U*)(0) > *(U*)(0))*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value =
+                    decltype(Test<string_type>(0))::value;
+        };
+
         // Checks for methods in user supplied json_traits
         // based on: https://stackoverflow.com/a/23133904
 
@@ -2561,15 +2587,47 @@ namespace jwt {
             static_assert(details::fail<Q>::value , "No valid string_equal method in json_traits and no operator== for string type");
         }
 
+        //json_traits has a string_less method
         template<class Q = json_traits>
-        static typename std::enable_if<details::has_string_less<Q, string_type>::value, bool>::type string_less(const string_type& string_a, const string_type& string_b){
+        static typename std::enable_if<
+            details::has_string_less<Q, string_type>::value,
+            bool
+        >::type string_less(const string_type& string_a, const string_type& string_b){
             return json_traits::string_less(string_a, string_b);
         }
 
+        // operator< is overloaded for string_type
         template<class Q = json_traits>
-        static typename std::enable_if<!details::has_string_less<Q, string_type>::value, bool>::type string_less(const string_type& string_a, const string_type& string_b){
-            //TODO assert that operator< or std::less is defined
+        static typename std::enable_if<
+            details::has_operator_less<string_type>::value &&
+            !details::has_string_less<Q, string_type>::value,
+            bool
+        >::type string_less(const string_type& string_a, const string_type& string_b){
             return string_a < string_b;
+        }
+
+        // operator> is overloaded for string_type
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            details::has_operator_greater<string_type>::value &&
+            !details::has_operator_less<string_type>::value &&
+            !details::has_string_less<Q, string_type>::value,
+            bool
+        >::type string_less(const string_type& string_a, const string_type& string_b){
+            return string_a > string_b;
+        }
+
+        //TODO add other suitable comparison operators
+        //No available less or greater than comparison for string_type
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            !details::has_operator_greater<string_type>::value &&
+            !details::has_operator_less<string_type>::value &&
+            !details::has_string_less<Q, string_type>::value,
+            bool
+        >::type string_less(const string_type& string_a, const string_type& string_b){
+            //Fail and print custom diagnostic message
+            static_assert(details::fail<Q>::value , "No valid string_less method in json_traits and no operator< or operator> for string type");
         }
 
         //Functions for json arrays

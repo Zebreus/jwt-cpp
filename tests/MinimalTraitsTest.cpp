@@ -27,6 +27,10 @@ public:
 //    {
 //        return this->real_value < other.real_value;
 //    }
+//    bool operator>(const minimal_string &other) const
+//    {
+//        return this->real_value > other.real_value;
+//    }
     std::string real_value;
 };
 
