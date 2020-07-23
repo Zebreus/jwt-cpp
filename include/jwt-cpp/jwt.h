@@ -1451,7 +1451,9 @@ namespace jwt {
             [[deprecated("Replaced by basic_claim(array_type), this is just for backwards compatibility")]]
             JWT_CLAIM_EXPLICIT basic_claim(const std::set<typename json_traits::string_type>& s)
                 : val(json_traits::array_construct(s.begin(), s.end()))
-            {}
+            {
+                static_assert(details::has_operator_less<typename json_traits::string_type>::value, "The basic claim constructor, with a set with the standart less function can only be used, if operator< is implemented for your string_type.");
+            }
             //TODO The iterator constructor is probably fine
 			template<typename Iterator>
 			basic_claim(Iterator begin, Iterator end)

@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "jwt-cpp/jwt.h"
-#include "nlohmann/json.hpp"
 #include "picojson/picojson.h"
 
 class minimal_string {
@@ -24,10 +23,10 @@ public:
 //    {
 //        return this->real_value == other.real_value;
 //    }
-    bool operator<(const minimal_string &other) const
-    {
-        return this->real_value < other.real_value;
-    }
+//    bool operator<(const minimal_string &other) const
+//    {
+//        return this->real_value < other.real_value;
+//    }
     std::string real_value;
 };
 
@@ -245,7 +244,7 @@ TEST(MinimalTraitsTest, BasicClaims) {
 
     const auto string = minimal_claim(jwt::default_traits<minimal_traits>::string_from_std("string"));
 
-    const auto array = minimal_claim(std::set<minimal_string>{jwt::default_traits<minimal_traits>::string_from_std("string"), jwt::default_traits<minimal_traits>::string_from_std("string")});
+    const auto array = minimal_claim(jwt::default_traits<minimal_traits>::key_set{jwt::default_traits<minimal_traits>::string_from_std("string"), jwt::default_traits<minimal_traits>::string_from_std("string")});
     const auto integer = minimal_claim((int64_t)159816816);
 }
 
