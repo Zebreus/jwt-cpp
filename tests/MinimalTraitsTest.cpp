@@ -20,12 +20,32 @@ public:
     minimal_string(const std::string& value, int preventCopyConstructor):
         real_value(value)
     {}
+//    bool operator==(const minimal_string &other) const
+//    {
+//        return this->real_value == other.real_value;
+//    }
     bool operator<(const minimal_string &other) const
     {
         return this->real_value < other.real_value;
     }
     std::string real_value;
 };
+
+namespace std
+{
+//    template<> struct hash<minimal_string>
+//    {
+//        std::size_t operator()(minimal_string const& s) const noexcept
+//        {
+//            return std::hash<std::string>()(s.real_value);
+//        }
+//    };
+}
+
+//bool operator==(const minimal_string& lhs, const minimal_string& rhs) noexcept
+//{
+//    return lhs.real_value == rhs.real_value;
+//}
 
 class minimal_object {
 public:

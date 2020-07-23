@@ -1095,6 +1095,19 @@ namespace jwt {
             static constexpr bool value = decltype(Test<std::hash<T>>(0))::value;
         };
 
+        // you can compare two strings using ==
+        template<typename string_type>
+        struct has_operator_equal {
+            template<typename U>
+            static std::true_type Test(decltype(*(U*)(0) == *(U*)(0))*);
+
+            template<typename U>
+            static std::false_type Test(...);
+
+            static constexpr bool value =
+                    decltype(Test<string_type>(0))::value;
+        };
+
         // Checks for methods in user supplied json_traits
         // based on: https://stackoverflow.com/a/23133904
 
@@ -2516,15 +2529,34 @@ namespace jwt {
             static_assert(details::fail<Q>::value , "No valid string_hash method in json_traits and no implementation of std::hash<string_type>");
         }
 
+        //json_traits has a string_equal method
         template<class Q = json_traits>
-        static typename std::enable_if<details::has_string_equal<Q, string_type>::value, bool>::type string_equal(const string_type& string_a, const string_type& string_b){
+        static typename std::enable_if<
+            details::has_string_equal<Q, string_type>::value,
+            bool
+        >::type string_equal(const string_type& string_a, const string_type& string_b){
             return json_traits::string_equal(string_a, string_b);
         }
 
+        // operator== is overloaded for string_type
         template<class Q = json_traits>
-        static typename std::enable_if<!details::has_string_equal<Q, string_type>::value, bool>::type string_equal(const string_type& string_a, const string_type& string_b){
-            //TODO assert that operator== or std::equal_to is defined
+        static typename std::enable_if<
+            details::has_operator_equal<string_type>::value &&
+            !details::has_string_equal<Q, string_type>::value,
+            bool
+        >::type string_equal(const string_type& string_a, const string_type& string_b){
             return string_a == string_b;
+        }
+
+        //No available equality comparison for string_type
+        template<class Q = json_traits>
+        static typename std::enable_if<
+            !details::has_operator_equal<string_type>::value &&
+            !details::has_string_equal<Q, string_type>::value,
+            bool
+        >::type string_equal(const string_type& string_a, const string_type& string_b){
+            //Fail and print custom diagnostic message
+            static_assert(details::fail<Q>::value , "No valid string_equal method in json_traits and no operator== for string type");
         }
 
         template<class Q = json_traits>
