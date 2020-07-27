@@ -1805,7 +1805,7 @@ namespace jwt {
 		/// Unmodified payload part in base64
         typename json_traits::string_type payload_base64;
 		/// Signature part decoded from base64
-        typename json_traits::string_type signature;
+        std::string signature;
 		/// Unmodified signature part in base64
         typename json_traits::string_type signature_base64;
 	public:
@@ -1820,7 +1820,7 @@ namespace jwt {
 		 */
         JWT_CLAIM_EXPLICIT decoded_jwt(const typename json_traits::string_type& token)
         : decoded_jwt(token, [](const typename json_traits::string_type& token){
-                return json_traits::string_from_std(base::decode<alphabet::base64url>(base::pad<alphabet::base64url>(json_traits::string_to_std(token))));
+                return base::decode<alphabet::base64url>(base::pad<alphabet::base64url>(json_traits::string_to_std(token)));
 		})
 		{}
 	#endif
@@ -1850,8 +1850,8 @@ namespace jwt {
             payload_base64 = json_traits::string_from_std(standart_token.substr(hdr_end + 1, payload_end - hdr_end - 1));
             signature_base64 = json_traits::string_from_std(standart_token.substr(payload_end + 1));
 
-            header = decode(header_base64);
-            payload = decode(payload_base64);
+            header = json_traits::string_from_std(decode(header_base64));
+            payload = json_traits::string_from_std(decode(payload_base64));
             signature = decode(signature_base64);
 
             auto parse_claims = [](const typename json_traits::string_type& str) {
@@ -1888,10 +1888,10 @@ namespace jwt {
 		 */
         const typename json_traits::string_type& get_payload() const noexcept { return payload; }
 		/**
-		 * Get signature part as json string
+         * Get signature part as a std::string ( used as byte array )
 		 * \return signature part after base64 decoding
 		 */
-        const typename json_traits::string_type& get_signature() const noexcept { return signature; }
+        const typename std::string& get_signature() const noexcept { return signature; }
 		/**
 		 * Get header part as base64 string
 		 * \return header part before base64 decoding
@@ -2229,7 +2229,7 @@ namespace jwt {
 		 */
         void verify(const decoded_jwt<user_json_traits>& jwt) const {
             const std::string data = json_traits::string_to_std(jwt.get_header_base64()) + "." + json_traits::string_to_std(jwt.get_payload_base64());
-            const std::string sig = json_traits::string_to_std(jwt.get_signature());
+            const std::string sig = jwt.get_signature();
             const std::string algo = json_traits::string_to_std(jwt.get_algorithm());
 			if (algs.count(algo) == 0)
 				throw token_verification_exception("wrong algorithm");
