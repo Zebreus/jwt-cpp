@@ -2059,13 +2059,13 @@ namespace jwt {
                 json_traits::object_set(obj_header, header_parameters<user_json_traits>::algorithm(), typename json_traits::value_type(json_traits::string_from_std(algo.name())));
 
             //Quite a lot of conversions, because:
-            // The encode function should work with the json stringtype
+            // The encode function does not work with json stringtype, because it could be a encoded stringtype
             // I dont want to rely on the json string implementing operator+
-            std::string header = json_traits::string_to_std(encode(json_traits::serialize(typename json_traits::value_type(obj_header))));
-            std::string payload = json_traits::string_to_std(encode(json_traits::serialize(typename json_traits::value_type(payload_claims))));
+            std::string header = json_traits::string_to_std(encode(json_traits::string_to_std(json_traits::serialize(typename json_traits::value_type(obj_header)))));
+            std::string payload = json_traits::string_to_std(encode(json_traits::string_to_std(json_traits::serialize(typename json_traits::value_type(payload_claims)))));
             std::string token = header + "." + payload;
 
-            return json_traits::string_from_std(token + "." + json_traits::string_to_std(encode(json_traits::string_from_std(algo.sign(token)))));
+            return json_traits::string_from_std(token + "." + json_traits::string_to_std(encode(algo.sign(token))));
 		}
 	#ifndef DISABLE_BASE64
 		/**
@@ -2078,8 +2078,8 @@ namespace jwt {
 		 */
 		template<typename Algo>
         typename json_traits::string_type sign(const Algo& algo) const {
-            return sign(algo, [](const typename json_traits::string_type& data) {
-                return json_traits::string_from_std(base::trim<alphabet::base64url>(base::encode<alphabet::base64url>(json_traits::string_to_std(data))));
+            return sign(algo, [](const std::string& data) {
+                return json_traits::string_from_std(base::trim<alphabet::base64url>(base::encode<alphabet::base64url>(data)));
 			});
 		}
 	#endif
